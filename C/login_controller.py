@@ -2,15 +2,11 @@
 学生选课系统 login_controller
 包含
     1. 登录
-    2. 注册
-    3. 退出
 注：
     1. 密码使用SHA256加密
-
-
-
-    1. 登录不同的账户，进入不同的功能界面
+    2. 登录不同的账户，使用不同的逻辑管理器
 """
+
 import socket
 import hashlib
 import json
@@ -46,13 +42,18 @@ class LoginController:
 
     # 处理客户端请求
     # 处理登录
-    def login(self, username, password):
-        pass
+    def login(self, request, client_socket):
+        username = request.get("username")
+        password = request.get("password")
+        user = self.authenticate(username, password)
 
-
-    # 处理注册
-    def register(self, username, password):
-        pass
+        if user:
+            self.handle_role(user, client_socket)
+            return True
+        else:
+            response = {"status": "error", "message": "登录失败"}
+            client_socket.sendall(json.dumps(response).encode('utf-8'))
+            return False
 
     # 处理退出
     def exit(self, client_socket):
@@ -61,44 +62,34 @@ class LoginController:
 
     # 处理客户端的请求消息
     def handle_client(self, client_socket):
+        # 主要处理部分，采用分支结构，不同的账户登录，使用不同的管理器
         while True:
             try:
                 data = client_socket.recv(1024).decode('utf-8')
+                # 卫语句，及时退出
                 if not data:
                     break
 
+                # 接收请求，处理登录身份验证和注册
                 request = json.loads(data)
                 action = request.get("action")
 
+                # 处理登录请求
                 if action == "login":
-                    username = request.get("username")
-                    password = request.get("password")
-                    user = self.authenticate(username, password)
-
-                    if user:
-                        role = user["role"]
-                        if role == "student":
-                            StudentController(client_socket, self.db_manager).start()
-                        elif role == "teacher":
-                            TeacherController(client_socket, self.db_manager).start()
-                        elif role == "admin":
-                            AdminController(client_socket, self.db_manager).start()
+                    if self.login(request, client_socket):
                         break
-                    else:
-                        response = {"status": "error", "message": "登录失败"}
-                        client_socket.sendall(json.dumps(response).encode('utf-8'))
                 else:
                     response = {"status": "error", "message": "无效请求"}
                     client_socket.sendall(json.dumps(response).encode('utf-8'))
             except Exception as e:
                 print(f"处理客户端时出错: {e}")
                 break
-        client_socket.close()
+        self.exit(client_socket)
 
     # 主线程：等待客户端连接
     def main(self):
         self.start_server()
-        self.db_manager = DatabaseManager() # 连接数据库类
+        self.db_manager = DatabaseManager()  # 连接数据库类
 
         while True:
             client_socket, addr = self.server_socket.accept()
@@ -120,8 +111,22 @@ class LoginController:
             if self.server_socket:
                 self.server_socket.close()
 
+    # 验证用户身份
     def authenticate(self, username, password):
-        pass
+        result = self.db_manager.query(username, password)
+        if result:
+            return result  # 返回用户信息
+        return None
+
+    # 处理不同身份
+    def handle_role(self, user, client_socket):
+        role = user["role"]
+        if role == "student":
+            StudentController(client_socket, self.db_manager).start()
+        elif role == "teacher":
+            TeacherController(client_socket, self.db_manager).start()
+        elif role == "admin":
+            AdminController(client_socket, self.db_manager).start()
 
 
 if __name__ == '__main__':

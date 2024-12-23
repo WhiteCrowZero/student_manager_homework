@@ -1,6 +1,7 @@
 from threading import Thread
 import json
 
+
 class TeacherController(Thread):
     def __init__(self, client_socket, db_manager):
         super().__init__()

@@ -3,14 +3,23 @@
 包含
 
 """
+import hashlib
 from threading import Thread
 import json
+
 
 class StudentController(Thread):
     def __init__(self, client_socket, db_manager):
         super().__init__()
         self.client_socket = client_socket
         self.db_manager = db_manager
+
+    # 密码加密方法（SHA256）
+    @staticmethod
+    def hash_password(password):
+        sha256 = hashlib.sha256()
+        sha256.update(password.encode('utf-8'))
+        return sha256.hexdigest()
 
     # 处理学生的功能
     def handle_student_request(self, request):
@@ -23,6 +32,12 @@ class StudentController(Thread):
             return self.select_course(student_id, course_id)
         else:
             return {"status": "error", "message": "无效的请求"}
+
+    # 查看信息
+    def view_info(self, student_id):
+        query = "SELECT * FROM students WHERE id = %s"
+        student = self.db_manager.query(query, (student_id,))
+        return {"status": "success", "data": student}
 
     # 查看课程
     def view_courses(self):

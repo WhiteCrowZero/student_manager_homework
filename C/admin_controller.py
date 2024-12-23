@@ -1,11 +1,20 @@
+import hashlib
 from threading import Thread
 import json
+
 
 class AdminController(Thread):
     def __init__(self, client_socket, db_manager):
         super().__init__()
         self.client_socket = client_socket
         self.db_manager = db_manager
+
+    # 密码加密方法（SHA256）
+    @staticmethod
+    def hash_password(password):
+        sha256 = hashlib.sha256()
+        sha256.update(password.encode('utf-8'))
+        return sha256.hexdigest()
 
     # 处理管理员请求
     def handle_admin_request(self, request):

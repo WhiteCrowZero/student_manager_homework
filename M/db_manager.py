@@ -26,6 +26,10 @@ class DatabaseManager:
         self.cursor.close()
         self.db.close()
 
+    """
+    登录部分
+    """
+
     # 处理登录
     def login(self, name, password):
         sql = "select 1 from users where name = BINARY %s and password = %s"
@@ -41,11 +45,74 @@ class DatabaseManager:
             print(e)
             return False
 
-    # 处理注册
-    def register(self, name, password):
-        sql = "insert into users(name, password) values (BINARY %s, %s)"
+    # 验证用户身份
+    def authenticate(self, name, password):
+        sql = "SELECT id, username, role FROM users WHERE username = %s AND password = SHA2(%s, 256)"
         try:
             self.cursor.execute(sql, (name, password))
+            self.db.commit()
+            return self.cursor.fetchone()[0]
+        except Exception as e:
+            self.db.rollback()
+            print(e)
+            return False
+
+    """
+    学生部分
+    """
+
+    def view_student_info(self, id):
+        sql = "select * from students where id = %s"
+        try:
+            self.cursor.execute(sql, (id,))
+            self.db.commit()
+            return self.cursor.fetchone()[0]
+        except Exception as e:
+            self.db.rollback()
+            print(e)
+            return False
+
+    def view_course(self, id):
+        sql = "select * from courses where id = %s"
+        try:
+            self.cursor.execute(sql, (id,))
+            self.db.commit()
+            return self.cursor.fetchone()[0]
+        except Exception as e:
+            self.db.rollback()
+            print(e)
+            return False
+
+    def view_score(self, id):
+        sql = "select * from scores where id = %s"
+        try:
+            self.cursor.execute(sql, (id,))
+            self.db.commit()
+            return self.cursor.fetchone()[0]
+        except Exception as e:
+            self.db.rollback()
+            print(e)
+            return False
+
+    """
+    教师部分
+    """
+
+    def view_class_course(self, id):
+        sql = "select * from class_course where id = %s"
+        try:
+            self.cursor.execute(sql, (id,))
+            self.db.commit()
+            return self.cursor.fetchone()[0]
+        except Exception as e:
+            self.db.rollback()
+            print(e)
+            return False
+
+    def insert_class_course(self, id, course):
+        sql = "insert into class_course values (%s, %s)"
+        try:
+            self.cursor.execute(sql, (id, course))
             self.db.commit()
             return True
         except Exception as e:
@@ -53,13 +120,27 @@ class DatabaseManager:
             print(e)
             return False
 
-    # 处理单词查询
-    def query(self, word):
-        sql = "select mean from words where word = %s"
+    """
+    管理员部分
+    """
+
+    def modify_pwd(self, id, password):
+        sql = "update students set password = %s where id = %s"
         try:
-            self.cursor.execute(sql, (word,))
+            self.cursor.execute(sql, (password, id))
             self.db.commit()
-            return self.cursor.fetchone()[0]
+            return True
+        except Exception as e:
+            self.db.rollback()
+            print(e)
+            return False
+
+    def create_teacher(self, id, name, password):
+        sql = "insert into teachers values (%s, %s)"
+        try:
+            self.cursor.execute(sql, (id, name, password))
+            self.db.commit()
+            return True
         except Exception as e:
             self.db.rollback()
             print(e)
