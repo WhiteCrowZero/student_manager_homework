@@ -18,7 +18,7 @@ from M.db_manager import DatabaseManager
 
 
 class LoginController:
-    def __init__(self, host='127.0.0.1', port=8888):
+    def __init__(self, host='127.0.0.1', port=12345):
         super().__init__()
         self.db_manager = None
         self.host = host
@@ -45,10 +45,14 @@ class LoginController:
     def login(self, request, client_socket):
         username = request.get("username")
         password = request.get("password")
+        password = self.hash_password(password)
         user = self.authenticate(username, password)
 
         if user:
             self.handle_role(user, client_socket)
+            role = user["role"]
+            response = {"status": "success", "role": role}
+            client_socket.sendall(json.dumps(response).encode('utf-8'))
             return True
         else:
             response = {"status": "error", "message": "登录失败"}
@@ -113,7 +117,7 @@ class LoginController:
 
     # 验证用户身份
     def authenticate(self, username, password):
-        result = self.db_manager.query(username, password)
+        result = self.db_manager.authenticate(username, password)
         if result:
             return result  # 返回用户信息
         return None

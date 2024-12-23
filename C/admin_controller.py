@@ -19,17 +19,22 @@ class AdminController(Thread):
     # 处理管理员请求
     def handle_admin_request(self, request):
         action = request.get("action")
+
         if action == "add_student":
             student_name = request.get("student_name")
             return self.add_student(student_name)
-        elif action == "add_teacher":
-            teacher_name = request.get("teacher_name")
-            return self.add_teacher(teacher_name)
-        elif action == "delete_course":
-            course_id = request.get("course_id")
-            return self.delete_course(course_id)
-        elif action == "view_all_users":
-            return self.view_all_users()
+
+        elif action == "show_student_info":
+            return self.show_student_info()
+        elif action == "update_students":
+            updated_students = request.get("data")
+            return self.update_students(updated_students)
+        elif action == "add_course":
+            course = request.get("data")
+            return self.add_course(course)
+        elif action == "show_courses_teachers":
+            return self.show_courses_teachers()
+
         else:
             return {"status": "error", "message": "无效的请求"}
 
@@ -73,3 +78,31 @@ class AdminController(Thread):
                 print(f"管理员控制器出错: {e}")
                 break
         self.client_socket.close()
+
+    def show_student_info(self):
+        students_info_list = self.db_manager.show_student_info()
+        if students_info_list:
+            return {"status": "success", "datas": students_info_list}
+        else:
+            return {"status": "error", "message": "获取学生信息失败"}
+
+    def update_students(self, updated_students):
+        if self.db_manager.update_students(updated_students):
+            return {"status": "success", "message": "学生信息已更新"}
+        else:
+            return {"status": "error", "message": "更新学生信息失败"}
+
+    def add_course(self, course):
+        if self.db_manager.add_course(course):
+            return {"status": "success", "message": "课程添加成功"}
+        else:
+            return {"status": "error", "message": "课程添加失败"}
+
+    def show_courses_teachers(self):
+        courses_teachers = self.db_manager.show_courses_teachers()
+        if courses_teachers:
+            return {"status": "success", "datas": courses_teachers}
+        else:
+            return {"status": "error", "message": "获取课程教师信息失败"}
+
+
