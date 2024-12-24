@@ -2,8 +2,10 @@ import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog
 from C.handle_client import HandleClient
 
+
 class TeacherView:
-    def __init__(self, root, handle_client):
+    def __init__(self, root, handle_client, id):
+        self.__id = id
         self.root = root
         self.teacher_window = None
         self.__handle_client = handle_client
@@ -32,8 +34,9 @@ class TeacherView:
         selection_window.title("我的课程")
 
         # 获取教师课程信息
-        response = self.__handle_client.send_request({"action": "get_teacher_courses"})
-        if response and "courses" in response:
+        response = self.__handle_client.send_request({"action": "get_teacher_courses", "teacher_id": self.__id})
+        status = response['status']
+        if status:
             teacher_courses = response["courses"]
         else:
             messagebox.showerror("错误", "获取课程信息失败")
@@ -41,7 +44,8 @@ class TeacherView:
 
         course_var = tk.StringVar()
         course_dropdown = ttk.Combobox(selection_window, textvariable=course_var)
-        course_dropdown['values'] = list(teacher_courses.keys())
+        ##################################################################
+        course_dropdown['values'] = teacher_courses.keys()
         course_dropdown.pack()
 
         def update_table(event):
@@ -50,7 +54,7 @@ class TeacherView:
                 return
 
             # 获取选课学生信息
-            response = self.__handle_client.send_request({"action": "get_course_students", "course": selected_course})
+            response = self.__handle_client.send_request({"action": "show_course_students", "course": selected_course})
             if response and "students" in response:
                 students = response["students"]
             else:
@@ -93,7 +97,7 @@ class TeacherView:
                 return
 
             # 获取选课学生成绩信息
-            response = self.__handle_client.send_request({"action": "get_course_grades", "course": selected_course})
+            response = self.__handle_client.send_request({"action": "show_course_students", "course": selected_course})
             if response and "students" in response:
                 students = response["students"]
             else:
@@ -123,7 +127,7 @@ class TeacherView:
                     })
 
                 response = self.__handle_client.send_request({
-                    "action": "update_grades", "data": {"course": selected_course, "grades": updated_grades}
+                    "action": "update_scores", "data": {"course": selected_course, "grades": updated_grades}
                 })
                 if response and response.get("status") == "success":
                     messagebox.showinfo("提示", "成绩保存成功")

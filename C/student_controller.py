@@ -7,6 +7,8 @@ import hashlib
 from threading import Thread
 import json
 
+from argon2 import hash_password
+
 
 class StudentController(Thread):
     def __init__(self, client_socket, db_manager):
@@ -24,32 +26,27 @@ class StudentController(Thread):
     # 处理学生的功能
     def handle_student_request(self, request):
         action = request.get("action")
-        if action == "view_courses":
-            return self.view_courses()
-        elif action == "select_course":
-            course_id = request.get("course_id")
+        if action == "show_student_info_single":
+            id = request.get("student_id")
+            return self.show_student_info_single(id)
+        elif action == "show_student_course_score":
             student_id = request.get("student_id")
-            return self.select_course(student_id, course_id)
+            return self.show_student_course_score(student_id)
+        elif action == "modify_passwd":
+            student_id = request.get("student_id")
+            new_password = request.get("new_password")
+            new_password = hash_password(new_password)
+            return self.modify_passwd(student_id, new_password)
+        elif action == "show_student_course":
+            return self.show_course()
+        elif action == "select_course":
+            student_id = request.get("student_id")
+            course_list = request.get("course_list")
+            return self.select_course(student_id, course_list)
+
+
         else:
             return {"status": "error", "message": "无效的请求"}
-
-    # 查看信息
-    def view_info(self, student_id):
-        query = "SELECT * FROM students WHERE id = %s"
-        student = self.db_manager.query(query, (student_id,))
-        return {"status": "success", "data": student}
-
-    # 查看课程
-    def view_courses(self):
-        query = "SELECT * FROM courses"
-        courses = self.db_manager.query(query)
-        return {"status": "success", "data": courses}
-
-    # 选择课程
-    def select_course(self, student_id, course_id):
-        query = "INSERT INTO student_courses (student_id, course_id) VALUES (%s, %s)"
-        self.db_manager.execute(query, (student_id, course_id))
-        return {"status": "success", "message": "选课成功"}
 
     # 运行线程
     def run(self):
@@ -65,3 +62,36 @@ class StudentController(Thread):
                 print(f"学生控制器出错: {e}")
                 break
         self.client_socket.close()
+
+    def show_student_info_single(self, id):
+        info = self.db_manager.show_student_info_single(id)
+        if info:
+            return {"status": "success", "datas": info}
+        else:
+            return {"status": "error", "message": "未找到学生信息"}
+
+    def show_student_course_score(self, student_id):
+        courses = self.db_manager.show_student_course_score(student_id)
+        if courses:
+            return {"status": "success", "datas": courses}
+        else:
+            return {"status": "error", "message": "未找到学生课程信息"}
+
+    def modify_passwd(self, student_id, new_password):
+        if self.db_manager.modify_passwd(student_id, new_password):
+            return {"status": "success", "message": "密码修改成功"}
+        else:
+            return {"status": "error", "message": "密码修改失败"}
+
+    def show_course(self):
+        info = self.db_manager.show_course()
+        if info:
+            return {"status": "success", "datas": info}
+        else:
+            return {"status": "error", "message": "未找到学生课程信息"}
+
+    def select_course(self, student_id, course_list):
+        for course_name in course_list:
+            if not self.db_manager.select_course(student_id, course_name):
+                return {"status": "error", "message": "选课失败"}
+        return {"status": "success", "message": "选课成功"}

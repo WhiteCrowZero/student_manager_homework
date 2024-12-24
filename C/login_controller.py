@@ -51,7 +51,8 @@ class LoginController:
         if user:
             self.handle_role(user, client_socket)
             role = user["role"]
-            response = {"status": "success", "role": role}
+            id = user["id"]
+            response = {"status": "success", "role": role, "id": id}
             client_socket.sendall(json.dumps(response).encode('utf-8'))
             return True
         else:

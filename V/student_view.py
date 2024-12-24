@@ -1,12 +1,14 @@
 import tkinter as tk
-from tkinter import ttk, messagebox as msgbox
+from tkinter import ttk, messagebox as msgbox, messagebox
 from C.handle_client import HandleClient
 
+
 class StudentView:
-    def __init__(self, root, handle_client):
+    def __init__(self, root, handle_client, id):
         self.root = root
         self.student_window = None
         self.__handle_client = handle_client
+        self.__id = id
 
     def open_student_interface(self):
         # 创建学生界面窗口
@@ -19,7 +21,7 @@ class StudentView:
 
         # 添加按钮
         buttons = [
-            ("查看自己学生信息", self.show_student_info),
+            ("查看信息", self.show_student_info),
             ("查看课程信息并选课", self.show_course_selection),
             ("查看所选课程成绩", self.show_selected_course_grades),
             ("修改自己密码", self.change_password),
@@ -39,8 +41,10 @@ class StudentView:
             tree.heading(col, text=col)
 
         # 从服务端获取学生数据
-        students = self.handleClient("get_student_info")
-        if students:
+        resp = self.__handle_client.send_request({"action": "show_student_info_single", "student_id": self.__id})
+        status = resp.get("status")
+        if status:
+            students = resp.get("datas")
             for student in students:
                 tree.insert("", "end", values=(student["学号"], student["姓名"], student["性别"], student["所在学院"]))
 
@@ -56,7 +60,7 @@ class StudentView:
             tree.heading(col, text=col)
 
         # 从服务端获取课程数据
-        courses = self.handleClient("get_courses")
+        courses = self.__handle_client.send_request({"action": "show_course"})
         if courses:
             for course in courses:
                 tree.insert("", "end", values=(course["课程号"], course["课程名"], course["学分"], course["任课教师"]))
@@ -72,7 +76,13 @@ class StudentView:
             selected_items.append(tree.item(item, "values"))
 
         # 向服务端提交选课数据
-        print("选课记录:", selected_items)
+        resp = self.__handle_client.send_request(
+            {"action": "student_select_course", "student_id": self.__id, "course_list": selected_items})
+        status = resp.get("status")
+        if status:
+            messagebox.showinfo("提示", "选课成功")
+        else:
+            messagebox.showerror("错误", "选课失败")
 
     def show_selected_course_grades(self):
         grades_window = tk.Toplevel(self.student_window)
@@ -84,7 +94,8 @@ class StudentView:
             tree.heading(col, text=col)
 
         # 从服务端获取成绩数据
-        grades_data = self.handleClient("get_grades")
+        grades_data = self.__handle_client.send_request(
+            {"action": "show_student_course_score", "student_id": self.__id})
         if grades_data:
             for grade in grades_data:
                 tree.insert("", "end", values=(grade["课程号"], grade["学号"], grade["成绩"]))
@@ -114,13 +125,15 @@ class StudentView:
 
     def check_password(self, new_password, confirm_password):
         if new_password == confirm_password:
-            response = self.handleClient("change_password", {"new_password": new_password})
+            response = self.__handle_client.send_request(
+                {"action": "change_password", "student_id": self.__id, "new_password": new_password})
             if response["status"] == "success":
                 msgbox.showinfo("成功", "密码修改成功")
             else:
                 msgbox.showerror("错误", response.get("message", "未知错误"))
         else:
             msgbox.showerror("错误", "两次输入密码不一致，请重新输入")
+
 
 # 主程序示例
 if __name__ == "__main__":

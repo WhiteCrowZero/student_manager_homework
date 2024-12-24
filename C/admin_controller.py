@@ -2,6 +2,8 @@ import hashlib
 from threading import Thread
 import json
 
+from argon2 import hash_password
+
 
 class AdminController(Thread):
     def __init__(self, client_socket, db_manager):
@@ -20,11 +22,7 @@ class AdminController(Thread):
     def handle_admin_request(self, request):
         action = request.get("action")
 
-        if action == "add_student":
-            student_name = request.get("student_name")
-            return self.add_student(student_name)
-
-        elif action == "show_student_info":
+        if action == "show_student_info":
             return self.show_student_info()
         elif action == "update_students":
             updated_students = request.get("data")
@@ -34,35 +32,20 @@ class AdminController(Thread):
             return self.add_course(course)
         elif action == "show_courses_teachers":
             return self.show_courses_teachers()
-
+        elif action == "assign_teacher":
+            course = request.get("course_id")
+            teacher = request.get("teacher_id")
+            return self.assign_teacher(course, teacher)
+        elif action == "show_course_students":
+            course_id = request.get("course_id")
+            return self.show_course_students(course_id)
+        elif action == "modify_passwd":
+            new_passwd = request.get("new_passwd")
+            new_passwd = hash_password(new_passwd)
+            account_id = request.get("account_id")
+            return self.modify_passwd(account_id, new_passwd)
         else:
             return {"status": "error", "message": "无效的请求"}
-
-    # 添加学生
-    def add_student(self, student_name):
-        query = "INSERT INTO students (name) VALUES (%s)"
-        self.db_manager.execute(query, (student_name,))
-        return {"status": "success", "message": f"学生 {student_name} 添加成功"}
-
-    # 添加教师
-    def add_teacher(self, teacher_name):
-        query = "INSERT INTO teachers (name) VALUES (%s)"
-        self.db_manager.execute(query, (teacher_name,))
-        return {"status": "success", "message": f"教师 {teacher_name} 添加成功"}
-
-    # 删除课程
-    def delete_course(self, course_id):
-        query = "DELETE FROM courses WHERE id = %s"
-        self.db_manager.execute(query, (course_id,))
-        return {"status": "success", "message": f"课程 ID {course_id} 已删除"}
-
-    # 查看所有用户
-    def view_all_users(self):
-        query_students = "SELECT id, name, 'student' AS role FROM students"
-        query_teachers = "SELECT id, name, 'teacher' AS role FROM teachers"
-        students = self.db_manager.query(query_students)
-        teachers = self.db_manager.query(query_teachers)
-        return {"status": "success", "data": {"students": students, "teachers": teachers}}
 
     # 运行线程
     def run(self):
@@ -105,4 +88,27 @@ class AdminController(Thread):
         else:
             return {"status": "error", "message": "获取课程教师信息失败"}
 
+    def assign_teacher(self, course, teacher):
+        if self.db_manager.assign_teacher(course, teacher):
+            return {"status": "success", "message": "教师分配成功"}
+        else:
+            return {"status": "error", "message": "教师分配失败"}
 
+    def show_course_students(self, course_id):
+        course_students = self.db_manager.show_course_students(course_id)
+        if course_students:
+            return {"status": "success", "datas": course_students}
+        else:
+            return {"status": "error", "message": "获取课程学生信息失败"}
+
+    def update_scores(self, updated_scores):
+        if self.db_manager.update_scores(updated_scores):
+            return {"status": "success", "message": "成绩已更新"}
+        else:
+            return {"status": "error", "message": "更新成绩失败"}
+
+    def modify_passwd(self, account_id, new_password):
+        if self.db_manager.modify_passwd(account_id, new_password):
+            return {"status": "success", "message": "密码修改成功"}
+        else:
+            return {"status": "error", "message": "密码修改失败"}

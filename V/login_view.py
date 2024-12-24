@@ -1,6 +1,5 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-
 from C.handle_client import HandleClient
 
 
@@ -11,6 +10,7 @@ class LoginView:
         self.root.geometry("400x300+500+200")
         self.__handle_client = HandleClient()
         self.setup_ui()
+        self.id = None
 
     def setup_ui(self):
         title_label = tk.Label(self.root, text="学生选课管理系统", font=("黑体", 16, "bold"))
@@ -39,16 +39,17 @@ class LoginView:
         }
         resp = self.__handle_client.send_request(request_data)
         if resp["status"] == "success":
-            return True, resp["role"]
+            return True, resp["role"], resp["id"]
         else:
-            return False, resp["message"]
+            return False, resp["message"], None
 
     def login(self):
         username = self.username_entry.get()
         password = self.password_entry.get()
-        status, role = self.validate_login(username, password)
+        status, role, id = self.validate_login(username, password)
 
         if status:
+            self.id = id
             messagebox.showinfo("成功", "登录成功！")
             self.root.withdraw()  # Hide the login window
 
@@ -64,14 +65,20 @@ class LoginView:
     def open_admin_interface(self):
         from admin_view import AdminView
         self.__handle_client.connect()
-        admin_view = AdminView(self.root, self.__handle_client)
+        admin_view = AdminView(self.root, self.__handle_client, self.id)
         admin_view.open_admin_interface()
 
     def open_student_interface(self):
-        messagebox.showinfo("学生", "学生界面开发中...")
+        from student_view import StudentView
+        self.__handle_client.connect()
+        student_view = StudentView(self.root, self.__handle_client, self.id)
+        student_view.open_student_interface()
 
     def open_teacher_interface(self):
-        messagebox.showinfo("教师", "教师界面开发中...")
+        from teacher_view import TeacherView
+        self.__handle_client.connect()
+        teacher_view = TeacherView(self.root, self.__handle_client, self.id)
+        teacher_view.open_teacher_interface()
 
 
 if __name__ == '__main__':

@@ -32,7 +32,7 @@ class DatabaseManager:
 
     # 验证用户身份
     def authenticate(self, name, password):
-        sql = "SELECT role FROM users WHERE username = %s AND password = SHA2(%s, 256)"
+        sql = "SELECT id, role FROM users WHERE username = %s AND password = SHA2(%s, 256)"
         try:
             self.cursor.execute(sql, (name, password))
             self.db.commit()
@@ -46,8 +46,19 @@ class DatabaseManager:
     学生部分
     """
 
-    def show_student_info(self):
-        sql = "select * from students"
+    def show_student_info_single(self, id):
+        sql = "select * from students where id = %s"
+        try:
+            self.cursor.execute(sql, (id,))
+            self.db.commit()
+            return self.cursor.fetchone()[0]
+        except Exception as e:
+            self.db.rollback()
+            print(e)
+            return False
+
+    def show_course(self):
+        sql = "select * from courses"
         try:
             self.cursor.execute(sql)
             self.db.commit()
@@ -57,23 +68,23 @@ class DatabaseManager:
             print(e)
             return False
 
-    def view_course(self, id):
-        sql = "select * from courses where id = %s"
+    def show_student_course_score(self, id):
+        sql = "select course_name, score from student_course where student_id = %s"
         try:
             self.cursor.execute(sql, (id,))
             self.db.commit()
-            return self.cursor.fetchone()[0]
+            return self.cursor.fetchall()
         except Exception as e:
             self.db.rollback()
             print(e)
             return False
 
-    def view_score(self, id):
-        sql = "select * from scores where id = %s"
+    def select_course(self, id, course_name):
+        sql = "insert into student_course values (%s, %s)"
         try:
-            self.cursor.execute(sql, (id,))
+            self.cursor.execute(sql, (id, course_name))
             self.db.commit()
-            return self.cursor.fetchone()[0]
+            return True
         except Exception as e:
             self.db.rollback()
             print(e)
@@ -83,23 +94,12 @@ class DatabaseManager:
     教师部分
     """
 
-    def view_class_course(self, id):
-        sql = "select * from class_course where id = %s"
+    def get_teacher_courses(self, teacher_id):
+        sql = "select courese_id, course_name from teacher_course where teacher_id = %s"
         try:
             self.cursor.execute(sql, (id,))
             self.db.commit()
-            return self.cursor.fetchone()[0]
-        except Exception as e:
-            self.db.rollback()
-            print(e)
-            return False
-
-    def insert_class_course(self, id, course):
-        sql = "insert into class_course values (%s, %s)"
-        try:
-            self.cursor.execute(sql, (id, course))
-            self.db.commit()
-            return True
+            return self.cursor.fetchall()
         except Exception as e:
             self.db.rollback()
             print(e)
@@ -113,7 +113,9 @@ class DatabaseManager:
         for student in students:
             sql = "update students set name = %s, gender = %s, college = %s, account = %s, password = %s where id = %s"
             try:
-                self.cursor.execute(sql, (student["姓名"], student["性别"], student["所在学院"], student["账号"], student["密码"], student["学号"]))
+                self.cursor.execute(sql, (
+                student["姓名"], student["性别"], student["所在学院"], student["账号"], student["密码"],
+                student["学号"]))
                 self.db.commit()
             except Exception as e:
                 self.db.rollback()
@@ -132,7 +134,40 @@ class DatabaseManager:
             print(e)
             return False
 
-    def modify_pwd(self, id, password):
+    def assign_teacher(self, course_id, teacher_id):
+        sql = "insert into course_teacher values (%s, %s)"
+        try:
+            self.cursor.execute(sql, (course_id, teacher_id))
+            self.db.commit()
+            return True
+        except Exception as e:
+            self.db.rollback()
+            print(e)
+            return False
+
+    def show_course_students(self, course_id):
+        sql = "select * from course_students where course_id = %s"
+        try:
+            self.cursor.execute(sql, (course_id,))
+            self.db.commit()
+            return self.cursor.fetchall()
+        except Exception as e:
+            self.db.rollback()
+            print(e)
+
+    def update_scores(self, scores):
+        for score in scores:
+            sql = "update course_students set score = %s where student_id = %s and course_id = %s"
+            try:
+                self.cursor.execute(sql, (score["成绩"], score["学号"], score["课程号"]))
+                self.db.commit()
+            except Exception as e:
+                self.db.rollback()
+                print(e)
+                return False
+        return True
+
+    def modify_passwd(self, id, password):
         sql = "update students set password = %s where id = %s"
         try:
             self.cursor.execute(sql, (password, id))
@@ -143,12 +178,12 @@ class DatabaseManager:
             print(e)
             return False
 
-    def create_teacher(self, id, name, password):
-        sql = "insert into teachers values (%s, %s)"
+    def show_student_info(self):
+        sql = "select * from students"
         try:
-            self.cursor.execute(sql, (id, name, password))
+            self.cursor.execute(sql)
             self.db.commit()
-            return True
+            return self.cursor.fetchall()
         except Exception as e:
             self.db.rollback()
             print(e)

@@ -4,10 +4,11 @@ from C.handle_client import HandleClient
 
 
 class AdminView:
-    def __init__(self, root, handle_client):
+    def __init__(self, root, handle_client, id):
         self.root = root
         self.admin_window = None
         self.__handle_client = handle_client
+        self.__id = id
 
     def open_admin_interface(self):
         self.admin_window = tk.Toplevel(self.root)
@@ -36,15 +37,13 @@ class AdminView:
         btn_assign_course.grid(row=4, column=0, sticky="nsew", padx=10, pady=10)
 
         btn_assign_account = tk.Button(self.admin_window, text="修改账号密码", command=self.modify_passwd,
-                                      font=button_font)
+                                       font=button_font)
         btn_assign_account.grid(row=5, column=0, sticky="nsew", padx=10, pady=10)
 
         self.admin_window.columnconfigure(0, weight=1)
         for i in range(5):
             self.admin_window.rowconfigure(i, weight=1)
 
-
-    # 这里具体的传递参数还不清不楚。。。。。。。。。。。。。。。。。。。。。。
     def show_student_info(self):
         response = self.__handle_client.send_request({"action": "show_student_info"})
         status = response['status']
@@ -69,7 +68,6 @@ class AdminView:
             messagebox.showerror("错误", "获取学生信息失败")
             print("获取学生信息失败")
 
-    # 这里的参数也不确定。。。。。。。。。。。。。。。。。。。。。。。。。
     def modify_student_info(self):
         response = self.__handle_client.send_request({"action": "show_student_info"})
         status = response['status']
@@ -148,75 +146,22 @@ class AdminView:
             messagebox.showwarning("警告", "请输入完整信息")
             print("请输入完整信息")
 
-    def modify_score(self):
-        response = self.__handle_client.send_request({"action": "show_student_scores"})
-        status = response['status']
-        if status == 'success':
-            scores = response["scores"]
-            modify_window = tk.Toplevel(self.admin_window)
-            modify_window.title("修改成绩")
-
-            tree = ttk.Treeview(modify_window, columns=("学号", "姓名", "课程名", "成绩"), show="headings")
-            tree.heading("学号", text="学号")
-            tree.heading("姓名", text="姓名")
-            tree.heading("课程名", text="课程名")
-            tree.heading("成绩", text="成绩")
-
-            for score in scores:
-                tree.insert("", "end", values=(
-                    score["学号"], score["姓名"], score["课程名"], score["成绩"]
-                ))
-
-            tree.pack()
-
-            save_btn = tk.Button(modify_window, text="保存", command=lambda: self.save_score_changes(tree))
-            save_btn.pack()
-        else:
-            messagebox.showerror("错误", "获取学生成绩失败")
-            print("获取学生成绩失败")
-
-    def save_score_changes(self, tree):
-        updated_scores = []
-        for item in tree.get_children():
-            values = tree.item(item)["values"]
-            updated_scores.append(
-                {"学号": values[0], "课程名": values[2], "成绩": values[3]}
-            )
-
-        response = self.__handle_client.send_request({"action": "update_scores", "data": updated_scores})
-        if response and response.get("status") == "success":
-            messagebox.showinfo("提示", "成绩已更新")
-            print("成绩已更新")
-        else:
-            messagebox.showerror("错误", "更新成绩失败")
-            print("更新成绩失败")
-
     def assign_course(self):
-        response = self.__handle_client.send_request({"action": "show_courses_teachers"})
-        status = response['status']
-        if status == 'success':
-            courses_teachers = response["courses_teachers"]
+        try:
             assign_window = tk.Toplevel(self.admin_window)
             assign_window.title("分配教师任教课程")
 
-            tree = ttk.Treeview(assign_window, columns=("课程号", "课程名", "教师工号", "教师姓名"), show="headings")
+            tree = ttk.Treeview(assign_window, columns=("课程号", "教师工号"), show="headings")
             tree.heading("课程号", text="课程号")
-            tree.heading("课程名", text="课程名")
             tree.heading("教师工号", text="教师工号")
-            tree.heading("教师姓名", text="教师姓名")
-
-            for ct in courses_teachers:
-                tree.insert("", "end", values=(
-                    ct["课程号"], ct["课程名"], ct["教师工号"], ct["教师姓名"]
-                ))
 
             tree.pack()
 
             assign_btn = tk.Button(assign_window, text="分配", command=lambda: self.assign_teacher_to_course(tree))
             assign_btn.pack()
-        else:
+        except Exception as e:
             messagebox.showerror("错误", "获取课程与教师信息失败")
-            print("获取课程与教师信息失败")
+            print(e)
 
     def assign_teacher_to_course(self, tree):
         selected_item = tree.selection()
@@ -240,11 +185,55 @@ class AdminView:
             messagebox.showwarning("警告", "请输入教师工号")
             print("教师工号为空")
 
+    def modify_score(self):
+        response = self.__handle_client.send_request({"action": "show_student_scores"})
+        status = response['status']
+        if status == 'success':
+            scores = response["scores"]
+            modify_window = tk.Toplevel(self.admin_window)
+            modify_window.title("修改成绩")
+
+            tree = ttk.Treeview(modify_window, columns=("学号", "姓名", "课程号", "课程名", "成绩"), show="headings")
+            tree.heading("学号", text="学号")
+            tree.heading("姓名", text="姓名")
+            tree.heading("课程号", text="课程号")
+            tree.heading("课程名", text="课程名")
+            tree.heading("成绩", text="成绩")
+
+            for score in scores:
+                tree.insert("", "end", values=(
+                    score["学号"], score["姓名"], score["课程号"], score["课程名"], score["成绩"]
+                ))
+
+            tree.pack()
+
+            save_btn = tk.Button(modify_window, text="保存", command=lambda: self.save_score_changes(tree))
+            save_btn.pack()
+        else:
+            messagebox.showerror("错误", "获取学生成绩失败")
+            print("获取学生成绩失败")
+
+    def save_score_changes(self, tree):
+        updated_scores = []
+        for item in tree.get_children():
+            values = tree.item(item)["values"]
+            updated_scores.append(
+                {"student_id": values[0], "course_id": values[2], "score": values[4]}
+            )
+
+        response = self.__handle_client.send_request({"action": "update_scores", "data": updated_scores})
+        if response and response.get("status") == "success":
+            messagebox.showinfo("提示", "成绩已更新")
+            print("成绩已更新")
+        else:
+            messagebox.showerror("错误", "更新成绩失败")
+            print("更新成绩失败")
+
     def modify_passwd(self):
         modify_window = tk.Toplevel(self.admin_window)
         modify_window.title("修改账号密码")
 
-        tk.Label(modify_window, text="账号:").grid(row=0, column=0, padx=10, pady=10)
+        tk.Label(modify_window, text="账号ID:").grid(row=0, column=0, padx=10, pady=10)
         account_entry = tk.Entry(modify_window)
         account_entry.grid(row=0, column=1, padx=10, pady=10)
 
@@ -258,7 +247,7 @@ class AdminView:
 
             if account and new_password:
                 response = self.__handle_client.send_request(
-                    {"action": "modify_passwd", "data": {"账号": account, "新密码": new_password}})
+                    {"action": "modify_passwd", "data": {"account_id": account, "new_passwd": new_password}})
                 if response and response.get("status") == "success":
                     messagebox.showinfo("提示", "密码修改成功")
                     print("密码修改成功")
