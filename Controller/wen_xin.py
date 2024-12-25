@@ -57,7 +57,7 @@ if __name__ == '__main__':
     # access_token = get_access_token(QIANFAN_ACCESS_KEY, QIANFAN_SECRET_KEY)
     access_token = '24.cf1f945ed80f4ed3699370d78afdd508.2592000.1737698654.282335-115433128'
 
-    selected_course = "C++编程基础"
+    selected_course = "Controller++编程基础"
     student_question = "如何使用C++连接MySQL？能否提供代码示例？"
 
     res = single_main(selected_course, student_question, access_token)

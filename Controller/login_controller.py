@@ -11,10 +11,10 @@ import socket
 import hashlib
 import json
 from threading import Thread
-from C.student_controller import StudentController
-from C.teacher_controller import TeacherController
-from C.admin_controller import AdminController
-from M.db_manager import DatabaseManager
+from Controller.student_controller import StudentController
+from Controller.teacher_controller import TeacherController
+from Controller.admin_controller import AdminController
+from Model.db_manager import DatabaseManager
 
 
 class LoginController:

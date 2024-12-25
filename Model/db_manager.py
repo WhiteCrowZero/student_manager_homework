@@ -85,7 +85,7 @@ class DatabaseManager:
             return False
 
     def select_course(self, id, course_id):
-        sql = "insert into student_course values (%s, %s, NULL)"
+        sql = "insert into student_course values ((select id from student where account_id = %s), %s, NULL)"
         try:
             self.cursor.execute(sql, (id, course_id))
             self.db.commit()
@@ -189,6 +189,17 @@ class DatabaseManager:
             self.cursor.execute(sql, (password, id))
             self.db.commit()
             return True
+        except Exception as e:
+            self.db.rollback()
+            print(e)
+            return False
+
+    def show_course_info(self):
+        sql = "select * from course"
+        try:
+            self.cursor.execute(sql)
+            self.db.commit()
+            return self.cursor.fetchall()
         except Exception as e:
             self.db.rollback()
             print(e)

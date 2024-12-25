@@ -51,6 +51,9 @@ class StudentAIHelper:
         self.input_entry = ttk.Entry(input_frame)
         self.input_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
 
+        style = ttk.Style()
+        style.configure('Accent.TButton', foreground='black' ,font=('黑体', 12))
+
         send_button = ttk.Button(input_frame, text="发送", command=self.get_student_input, style="Accent.TButton")
         send_button.pack(side=tk.RIGHT)
 
@@ -106,7 +109,7 @@ class StudentAIHelper:
         self.chat_display.see(tk.END)
 
 if __name__ == '__main__':
-    from C.handle_client import HandleClient
+    from Controller.handle_client import HandleClient
 
     root = tk.Tk()
     root.withdraw()  # 隐藏主窗口

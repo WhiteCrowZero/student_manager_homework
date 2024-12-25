@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 
+from Controller.handle_client import HandleClient
+
 
 class TeacherView:
     def __init__(self, root, handle_client, teacher_id):
@@ -14,23 +16,25 @@ class TeacherView:
         self.teacher_window.geometry("400x300")
 
         # 主界面布局使用 ttk 样式按钮
-        button_font = ("宋体", 12)
+        style = ttk.Style()
+        style.configure('TButton', font=('黑体', 12))
 
         ttk.Label(self.teacher_window, text="教师管理系统", font=("宋体", 16, "bold")).pack(pady=10)
 
         # 查看所教课程信息按钮
+        style = ttk.Style()
         btn_show_teacher_course_selection_info = ttk.Button(
             self.teacher_window, text="查看所教课程信息",
             command=self.show_teacher_course_selection_info
         )
-        btn_show_teacher_course_selection_info.pack(pady=10)
+        btn_show_teacher_course_selection_info.pack(padx=10, pady=10)
 
         # 录入课程成绩按钮
         btn_enter_grades = ttk.Button(
             self.teacher_window, text="录入课程成绩",
             command=self.enter_grades
         )
-        btn_enter_grades.pack(pady=10)
+        btn_enter_grades.pack(padx=10, pady=10)
 
         self.teacher_window.mainloop()
 
@@ -86,6 +90,7 @@ class TeacherView:
         course_dropdown = ttk.Combobox(grades_window, textvariable=course_var, state="readonly", width=25)
         course_dropdown['values'] = [f"{course[0]} {course[1]}" for course in teacher_courses]
         course_dropdown.pack(pady=5)
+        course_dropdown.current(0)
 
         # 输入学号和成绩
         ttk.Label(grades_window, text="输入学号:").pack(pady=5)
@@ -137,17 +142,8 @@ class TeacherView:
 
 # 以下代码用于测试
 if __name__ == '__main__':
-    class MockHandleClient:
-        def send_request(self, request):
-            # 模拟服务端返回数据
-            if request["action"] == "get_teacher_courses":
-                return {"status": "success", "datas": [("001", "数学", 3), ("002", "英语", 2)]}
-            elif request["action"] == "update_scores":
-                return {"status": "success"}
-            return {"status": "fail"}
-
     root = tk.Tk()
-    client = MockHandleClient()  # 模拟服务端句柄
-    app = TeacherView(root, client, "T001")  # 假设教师ID为 T001
+    handle_client = HandleClient()
+    app = TeacherView(root, handle_client, "T001")  # 假设教师ID为 T001
     app.open_teacher_interface()
     root.mainloop()

@@ -1,5 +1,5 @@
 -- 创建数据库
-CREATE DATABASE student_course;
+CREATE DATABASE IF NOT EXISTS student_course;
 USE student_course;
 
 -- 删除旧表

@@ -6,7 +6,7 @@
 import hashlib
 from threading import Thread
 import json
-from C.wen_xin import single_main
+from Controller.wen_xin import single_main
 
 
 class StudentController(Thread):
@@ -41,8 +41,8 @@ class StudentController(Thread):
             return self.modify_passwd(id, new_password)
         elif action == "select_course":
             student_id = request.get("student_id")
-            course_list = request.get("course_list")
-            return self.select_course(student_id, course_list)
+            course_id = request.get("course_id")
+            return self.select_course(student_id, course_id)
         elif action == "ai_for_student":
             student_id = request.get("student_id")
             problem = request.get("problem")
@@ -94,11 +94,11 @@ class StudentController(Thread):
         else:
             return {"status": "error", "message": "密码修改失败"}
 
-    def select_course(self, student_id, course_list):
-        for course_id in course_list:
-            if not self.db_manager.select_course(student_id, course_id):
-                return {"status": "error", "message": "选课失败"}
-        return {"status": "success", "message": "选课成功"}
+    def select_course(self, student_id, course_id):
+        if self.db_manager.select_course(student_id, course_id):
+            return {"status": "success", "message": "选课成功"}
+        else:
+            return {"status": "error", "message": "选课失败"}
 
     def ai_for_student(self, student_id, problem):
         courses = self.db_manager.show_student_course_score(student_id)

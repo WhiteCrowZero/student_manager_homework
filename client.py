@@ -1,4 +1,4 @@
-from V.login_view import LoginView
+from View.login_view import LoginView
 import tkinter as tk
 
 if __name__ == '__main__':

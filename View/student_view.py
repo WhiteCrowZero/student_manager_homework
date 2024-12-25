@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from C.handle_client import HandleClient
+from Controller.handle_client import HandleClient
 
 
 class StudentView:
@@ -12,20 +12,43 @@ class StudentView:
     def open_student_interface(self):
         # 创建学生界面窗口
         self.student_window.title("学生界面")
-        self.student_window.geometry("500x400")
+        self.student_window.geometry("400x300")
+        title_label = ttk.Label(self.student_window, text="学生选课系统", font=("宋体", 16, "bold"))
+        title_label.grid(row=0, padx=10, pady=10)
 
-        # 添加按钮
-        buttons = [
-            ("查看信息", self.show_student_info),
-            ("查看课程信息并选课", self.show_course_selection),
-            ("查看所选课程成绩", self.show_selected_course_grades),
-            ("修改自己密码", self.modify_passwd),
-            ("向AI助教询问", self.ai_for_student),
-        ]
+        # 配置行和列的权重，使标签居中
+        self.student_window.grid_rowconfigure(0, weight=1)
+        self.student_window.grid_columnconfigure(0, weight=1)
 
-        for text, command in buttons:
-            btn = ttk.Button(self.student_window, text=text, command=command)
-            btn.pack(pady=10, padx=20, anchor="center")
+        style = ttk.Style()
+        style.configure('TButton', font=('黑体', 12))
+
+        btn_show_student_info = ttk.Button(self.student_window, text="查看信息", command=self.show_student_info,
+                                           style="TButton", width=20)
+        btn_show_student_info.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
+
+        btn_show_course_selection = ttk.Button(self.student_window, text="查看课程并选课",
+                                               command=self.show_course_selection,
+                                               style="TButton", width=20)
+        btn_show_course_selection.grid(row=2, column=0, sticky="nsew", padx=10, pady=10)
+
+        btn_show_selected_course_grades = ttk.Button(self.student_window, text="查看所选课程成绩",
+                                                     command=self.show_selected_course_grades,
+                                                     style="TButton", width=20)
+        btn_show_selected_course_grades.grid(row=3, column=0, sticky="nsew", padx=10, pady=10)
+
+        btn_modify_password = ttk.Button(self.student_window, text="修改自己的密码", command=self.modify_passwd,
+                                         style="TButton",
+                                         width=20)
+        btn_modify_password.grid(row=4, column=0, sticky="nsew", padx=10, pady=10)
+
+        btn_ai_for_student = ttk.Button(self.student_window, text="向AI助教询问", command=self.ai_for_student,
+                                        style="TButton", width=20)
+        btn_ai_for_student.grid(row=5, column=0, sticky="nsew", padx=10, pady=10)
+
+        self.student_window.columnconfigure(0, weight=1)
+        for i in range(6):
+            self.student_window.rowconfigure(i, weight=1)
 
         self.student_window.mainloop()
 
@@ -76,26 +99,17 @@ class StudentView:
         submit_button.pack(pady=10)
 
     def submit_selection(self, tree):
-        # 获取选中的课程号
-        selected_courses = []
         for item in tree.selection():
             course_values = tree.item(item, "values")
-            course_id = course_values[0]  # 假设课程号是第一列
-            selected_courses.append(course_id)
+            course_id = course_values[0]  # 课程号是第一列
 
-        # 检查是否有选中课程
-        if not selected_courses:
-            messagebox.showwarning("提示", "请选择至少一门课程")
-            return
-
-        # 向服务端提交选课数据
-        resp = self.__handle_client.send_request(
-            {"action": "select_course", "student_id": self.__id, "course_list": selected_courses})
-        status = resp.get("status")
-        if status:
-            messagebox.showinfo("提示", "选课成功")
-        else:
-            messagebox.showerror("错误", "选课失败")
+            # 向服务端提交选课数据
+            resp = self.__handle_client.send_request(
+                {"action": "select_course", "student_id": self.__id, "course_id": course_id})
+            status = resp.get("status")
+            if not status:
+                messagebox.showerror("错误", "选课失败")
+        messagebox.showinfo("提示", "选课成功")
 
     def show_selected_course_grades(self):
         grades_window = tk.Toplevel(self.student_window)
@@ -154,7 +168,7 @@ class StudentView:
             messagebox.showerror("错误", "两次输入密码不一致，请重新输入")
 
     def ai_for_student(self):
-        from V.ai_view import StudentAIHelper
+        from View.ai_view import StudentAIHelper
         ai_view = StudentAIHelper(self.student_window, self.__handle_client, self.__id)
         ai_view.ai_for_student()
 

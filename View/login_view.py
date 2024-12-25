@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from C.handle_client import HandleClient
+from Controller.handle_client import HandleClient
 
 
 class LoginView:
@@ -40,7 +40,7 @@ class LoginView:
 
         # 登录按钮
         login_button = ttk.Button(self.root, text="确认登录", command=self.login)
-        login_button.pack(pady=20)
+        login_button.pack(pady= 10)
 
     def validate_login(self, username, password):
         """验证登录信息"""
@@ -92,22 +92,25 @@ class LoginView:
 
     def open_admin_interface(self):
         """打开管理员界面"""
-        from V.admin_view import AdminView
+        from View.admin_view import AdminView
         admin_root = tk.Tk()
+        admin_root.geometry("400x300+500+200")
         admin_app = AdminView(admin_root, self.__handle_client, self.id)
         admin_app.open_admin_interface()
 
     def open_student_interface(self):
         """打开学生界面"""
-        from V.student_view import StudentView
+        from View.student_view import StudentView
         student_root = tk.Tk()
+        student_root.geometry("400x300+500+200")
         student_app = StudentView(student_root, self.__handle_client, self.id)
         student_app.open_student_interface()
 
     def open_teacher_interface(self):
         """打开教师界面"""
-        from V.teacher_view import TeacherView
+        from View.teacher_view import TeacherView
         teacher_root = tk.Tk()
+        teacher_root.geometry("400x300+500+200")
         teacher_app = TeacherView(teacher_root, self.__handle_client, self.id)
         teacher_app.open_teacher_interface()
 
