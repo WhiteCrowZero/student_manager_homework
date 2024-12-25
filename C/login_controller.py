@@ -24,7 +24,6 @@ class LoginController:
         self.host = host
         self.port = port
         self.server_socket = None
-        self.clients = []
 
     # 密码加密方法（SHA256）
     @staticmethod
@@ -50,20 +49,15 @@ class LoginController:
 
         if user:
             self.handle_role(user, client_socket)
-            role = user["role"]
-            id = user["id"]
-            response = {"status": "success", "role": role, "id": id}
-            client_socket.sendall(json.dumps(response).encode('utf-8'))
+            id = user[0]
+            category = user[1]
+            response = {"status": "success", "category": category, "id": id}
+            client_socket.send(json.dumps(response).encode('utf-8'))
             return True
         else:
             response = {"status": "error", "message": "登录失败"}
-            client_socket.sendall(json.dumps(response).encode('utf-8'))
+            client_socket.send(json.dumps(response).encode('utf-8'))
             return False
-
-    # 处理退出
-    def exit(self, client_socket):
-        client_socket.close()
-        self.clients.remove(client_socket)
 
     # 处理客户端的请求消息
     def handle_client(self, client_socket):
@@ -85,11 +79,10 @@ class LoginController:
                         break
                 else:
                     response = {"status": "error", "message": "无效请求"}
-                    client_socket.sendall(json.dumps(response).encode('utf-8'))
+                    client_socket.send(json.dumps(response).encode('utf-8'))
             except Exception as e:
                 print(f"处理客户端时出错: {e}")
                 break
-        self.exit(client_socket)
 
     # 主线程：等待客户端连接
     def main(self):
@@ -99,7 +92,6 @@ class LoginController:
         while True:
             client_socket, addr = self.server_socket.accept()
             print(f"客户端已连接: {addr}")
-            self.clients.append(client_socket)
 
             # 为每个客户端启动独立线程
             client_thread = Thread(target=self.handle_client, args=(client_socket,))
@@ -125,12 +117,12 @@ class LoginController:
 
     # 处理不同身份
     def handle_role(self, user, client_socket):
-        role = user["role"]
-        if role == "student":
+        category = user[1]
+        if category == "student":
             StudentController(client_socket, self.db_manager).start()
-        elif role == "teacher":
+        elif category == "teacher":
             TeacherController(client_socket, self.db_manager).start()
-        elif role == "admin":
+        elif category == "admin":
             AdminController(client_socket, self.db_manager).start()
 
 

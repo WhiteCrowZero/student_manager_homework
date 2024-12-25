@@ -6,12 +6,10 @@ from C.handle_client import HandleClient
 class TeacherView:
     def __init__(self, root, handle_client, id):
         self.__id = id
-        self.root = root
-        self.teacher_window = None
+        self.teacher_window = root
         self.__handle_client = handle_client
 
     def open_teacher_interface(self):
-        self.teacher_window = tk.Toplevel(self.root)
         self.teacher_window.title("教师界面")
         self.teacher_window.geometry("400x300")
 
@@ -28,6 +26,8 @@ class TeacherView:
             command=self.enter_grades, font=button_font
         )
         btn_enter_grades.pack(pady=10)
+
+        self.teacher_window.mainloop()
 
     def show_teacher_course_selection_info(self):
         selection_window = tk.Toplevel(self.teacher_window)

@@ -5,13 +5,11 @@ from C.handle_client import HandleClient
 
 class AdminView:
     def __init__(self, root, handle_client, id):
-        self.root = root
-        self.admin_window = None
+        self.admin_window = root
         self.__handle_client = handle_client
         self.__id = id
 
     def open_admin_interface(self):
-        self.admin_window = tk.Toplevel(self.root)
         self.admin_window.title("管理员界面")
         self.admin_window.geometry("400x300")
 
@@ -43,6 +41,8 @@ class AdminView:
         self.admin_window.columnconfigure(0, weight=1)
         for i in range(5):
             self.admin_window.rowconfigure(i, weight=1)
+
+        self.admin_window.mainloop()
 
     def show_student_info(self):
         response = self.__handle_client.send_request({"action": "show_student_info"})

@@ -18,8 +18,10 @@ class HandleClient:
     def send_request(self, request_data):
         try:
             message = json.dumps(request_data).encode('utf-8')
-            self.client_socket.sendall(message)
+            self.client_socket.send(message)
+            # print('send message')
             response = self.client_socket.recv(4096)
+            # print(response)
             return json.loads(response.decode('utf-8'))
         except Exception as e:
             print(f"请求发送失败: {e}")

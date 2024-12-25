@@ -6,8 +6,7 @@
 import hashlib
 from threading import Thread
 import json
-
-from argon2 import hash_password
+from C.wen_xin import single_main
 
 
 class StudentController(Thread):
@@ -27,24 +26,27 @@ class StudentController(Thread):
     def handle_student_request(self, request):
         action = request.get("action")
         if action == "show_student_info_single":
-            id = request.get("student_id")
+            id = request.get("account_id")
             return self.show_student_info_single(id)
+        elif action == "show_course":
+            id = request.get("account_id")
+            return self.show_course(id)
         elif action == "show_student_course_score":
             student_id = request.get("student_id")
             return self.show_student_course_score(student_id)
         elif action == "modify_passwd":
-            student_id = request.get("student_id")
+            id = request.get("id")
             new_password = request.get("new_password")
-            new_password = hash_password(new_password)
-            return self.modify_passwd(student_id, new_password)
-        elif action == "show_student_course":
-            return self.show_course()
+            new_password = self.hash_password(new_password)
+            return self.modify_passwd(id, new_password)
         elif action == "select_course":
             student_id = request.get("student_id")
             course_list = request.get("course_list")
             return self.select_course(student_id, course_list)
-
-
+        elif action == "ai_for_student":
+            student_id = request.get("student_id")
+            problem = request.get("problem")
+            return self.ai_for_student(student_id, problem)
         else:
             return {"status": "error", "message": "无效的请求"}
 
@@ -57,7 +59,7 @@ class StudentController(Thread):
                     break
                 request = json.loads(data)
                 response = self.handle_student_request(request)
-                self.client_socket.sendall(json.dumps(response).encode('utf-8'))
+                self.client_socket.send(json.dumps(response).encode('utf-8'))
             except Exception as e:
                 print(f"学生控制器出错: {e}")
                 break
@@ -70,10 +72,19 @@ class StudentController(Thread):
         else:
             return {"status": "error", "message": "未找到学生信息"}
 
+    def show_course(self, id):
+        info = self.db_manager.show_course(id)
+        print(info)
+        print(list(info))
+        if info:
+            return {"status": "success", "datas": list(info)}
+        else:
+            return {"status": "error", "message": "未找到学生课程信息"}
+
     def show_student_course_score(self, student_id):
         courses = self.db_manager.show_student_course_score(student_id)
         if courses:
-            return {"status": "success", "datas": courses}
+            return {"status": "success", "datas": list(courses)}
         else:
             return {"status": "error", "message": "未找到学生课程信息"}
 
@@ -83,15 +94,20 @@ class StudentController(Thread):
         else:
             return {"status": "error", "message": "密码修改失败"}
 
-    def show_course(self):
-        info = self.db_manager.show_course()
-        if info:
-            return {"status": "success", "datas": info}
-        else:
-            return {"status": "error", "message": "未找到学生课程信息"}
-
     def select_course(self, student_id, course_list):
-        for course_name in course_list:
-            if not self.db_manager.select_course(student_id, course_name):
+        for course_id in course_list:
+            if not self.db_manager.select_course(student_id, course_id):
                 return {"status": "error", "message": "选课失败"}
         return {"status": "success", "message": "选课成功"}
+
+    def ai_for_student(self, student_id, problem):
+        courses = self.db_manager.show_student_course_score(student_id)
+        if courses:
+            return self.wen_xin(courses, problem)
+        else:
+            return {"status": "error", "message": "智能智障（joker）"}
+
+    @staticmethod
+    def wen_xin(courses, problem):
+        reply = single_main(courses, problem)
+        return {"status": "success", "courses": courses, "datas": reply}

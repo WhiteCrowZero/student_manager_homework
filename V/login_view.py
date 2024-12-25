@@ -26,6 +26,14 @@ class LoginView:
         self.password_entry = tk.Entry(self.root, show="*", font=("黑体", 15, "bold"))
         self.password_entry.pack()
 
+        # 身份选择下拉框
+        self.user_type_label = ttk.Label(self.root, text="选择身份:", font=("黑体", 15, "bold"))
+        self.user_type_label.pack()
+        self.user_type_combobox = ttk.Combobox(self.root, font=("黑体", 15, "bold"))
+        self.user_type_combobox['values'] = ("学生", "管理员", "教师")
+        self.user_type_combobox.set("学生")
+        self.user_type_combobox.pack()
+
         login_button = tk.Button(self.root, text="确认登录",
                                  command=self.login,
                                  font=("黑体", 15, "bold"))
@@ -37,48 +45,62 @@ class LoginView:
             "username": username,
             "password": password,
         }
+        self.__handle_client.connect()
         resp = self.__handle_client.send_request(request_data)
         if resp["status"] == "success":
-            return True, resp["role"], resp["id"]
+            return True, resp["category"], resp["id"]
         else:
+            self.__handle_client.close()
             return False, resp["message"], None
 
     def login(self):
+        role_dict = {
+            "管理员": "admin",
+            "学生": "student",
+            "教师": "teacher"
+        }
         username = self.username_entry.get()
         password = self.password_entry.get()
+        role_input = role_dict[self.user_type_combobox.get()]
+        if not username or not password:
+            messagebox.showerror("错误", "请输入用户名和密码")
+            return
         status, role, id = self.validate_login(username, password)
 
         if status:
+            if role != role_input:
+                messagebox.showerror("错误", "身份不匹配")
+                return
             self.id = id
             messagebox.showinfo("成功", "登录成功！")
-            self.root.withdraw()  # Hide the login window
+            self.root.destroy()  # 关闭主窗口
 
-            if role == "管理员":
+            if role == "admin":
                 self.open_admin_interface()
-            elif role == "学生":
+            elif role == "student":
                 self.open_student_interface()
-            elif role == "教师":
+            elif role == "teacher":
                 self.open_teacher_interface()
         else:
             messagebox.showerror("错误", role)  # 实际这里的 role 变量包含的就是报错信息了
 
     def open_admin_interface(self):
-        from admin_view import AdminView
-        self.__handle_client.connect()
-        admin_view = AdminView(self.root, self.__handle_client, self.id)
-        admin_view.open_admin_interface()
+        from V.admin_view import AdminView
+        admin_root = tk.Tk()
+        a = AdminView(admin_root, self.__handle_client, self.id)
+        a.open_admin_interface()
 
     def open_student_interface(self):
-        from student_view import StudentView
-        self.__handle_client.connect()
-        student_view = StudentView(self.root, self.__handle_client, self.id)
-        student_view.open_student_interface()
+        from V.student_view import StudentView
+        student_root = tk.Tk()
+        s = StudentView(student_root, self.__handle_client, self.id)
+        s.open_student_interface()
 
     def open_teacher_interface(self):
-        from teacher_view import TeacherView
-        self.__handle_client.connect()
-        teacher_view = TeacherView(self.root, self.__handle_client, self.id)
-        teacher_view.open_teacher_interface()
+        from V.teacher_view import TeacherView
+        teacher_root = tk.Tk()
+        t = TeacherView(teacher_root, self.__handle_client, self.id)
+        t.open_teacher_interface()
 
 
 if __name__ == '__main__':
