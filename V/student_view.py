@@ -1,7 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, messagebox as msgbox, messagebox
-from turtledemo.penrose import start
-
+from tkinter import ttk, messagebox
 from C.handle_client import HandleClient
 
 
@@ -16,9 +14,6 @@ class StudentView:
         self.student_window.title("学生界面")
         self.student_window.geometry("500x400")
 
-        # 设置按钮字体样式
-        button_font = ("宋体", 15, "bold")
-
         # 添加按钮
         buttons = [
             ("查看信息", self.show_student_info),
@@ -29,51 +24,56 @@ class StudentView:
         ]
 
         for text, command in buttons:
-            btn = tk.Button(self.student_window, text=text, command=command, font=button_font)
-            btn.pack(pady=10)
+            btn = ttk.Button(self.student_window, text=text, command=command)
+            btn.pack(pady=10, padx=20, anchor="center")
 
         self.student_window.mainloop()
 
     def show_student_info(self):
         info_window = tk.Toplevel(self.student_window)
         info_window.title("学生信息")
+        info_window.geometry("600x400")
+
         columns = ("学号", "姓名", "性别", "所在学院", "班级")
         tree = ttk.Treeview(info_window, columns=columns, show="headings")
 
         for col in columns:
             tree.heading(col, text=col)
+            tree.column(col, width=120, anchor="center")
 
         # 从服务端获取学生数据
         resp = self.__handle_client.send_request({"action": "show_student_info_single", "account_id": self.__id})
         status = resp.get("status")
         if status:
             student = resp.get("datas")
-            print(student)
             tree.insert("", "end", values=(student))
 
-        tree.pack()
+        tree.pack(fill="both", expand=True)
 
     def show_course_selection(self):
         selection_window = tk.Toplevel(self.student_window)
         selection_window.title("选课界面")
+        selection_window.geometry("600x400")
+
         columns = ("课程号", "课程名", "学分", "任课教师")
         tree = ttk.Treeview(selection_window, columns=columns, show="headings")
 
         for col in columns:
             tree.heading(col, text=col)
+            tree.column(col, width=120, anchor="center")
 
         # 从服务端获取课程数据
         courses = self.__handle_client.send_request({"action": "show_course", "account_id": self.__id})
-        print(courses)
         status = courses.get("status")
         if status:
             courses = courses.get("datas")
             for course in courses:
                 tree.insert("", "end", values=(course))
-        tree.pack()
 
-        submit_button = tk.Button(selection_window, text="提交", command=lambda: self.submit_selection(tree))
-        submit_button.pack()
+        tree.pack(fill="both", expand=True)
+
+        submit_button = ttk.Button(selection_window, text="提交", command=lambda: self.submit_selection(tree))
+        submit_button.pack(pady=10)
 
     def submit_selection(self, tree):
         # 获取选中的课程号
@@ -100,11 +100,14 @@ class StudentView:
     def show_selected_course_grades(self):
         grades_window = tk.Toplevel(self.student_window)
         grades_window.title("成绩界面")
+        grades_window.geometry("600x400")
+
         columns = ("课程号", "课程名", "成绩")
         tree = ttk.Treeview(grades_window, columns=columns, show="headings")
 
         for col in columns:
             tree.heading(col, text=col)
+            tree.column(col, width=120, anchor="center")
 
         # 从服务端获取成绩数据
         grades_data = self.__handle_client.send_request(
@@ -115,39 +118,40 @@ class StudentView:
             for grade in grades_data:
                 tree.insert("", "end", values=(grade))
 
-        tree.pack()
+        tree.pack(fill="both", expand=True)
 
     def modify_passwd(self):
         password_window = tk.Toplevel(self.student_window)
         password_window.title("修改密码")
+        password_window.geometry("300x200")
 
-        new_password_label = tk.Label(password_window, text="新密码:")
-        new_password_label.pack()
-        new_password_entry = tk.Entry(password_window, show="*")
-        new_password_entry.pack()
+        new_password_label = ttk.Label(password_window, text="新密码:")
+        new_password_label.pack(pady=5)
+        new_password_entry = ttk.Entry(password_window, show="*")
+        new_password_entry.pack(pady=5)
 
-        confirm_password_label = tk.Label(password_window, text="确认新密码:")
-        confirm_password_label.pack()
-        confirm_password_entry = tk.Entry(password_window, show="*")
-        confirm_password_entry.pack()
+        confirm_password_label = ttk.Label(password_window, text="确认新密码:")
+        confirm_password_label.pack(pady=5)
+        confirm_password_entry = ttk.Entry(password_window, show="*")
+        confirm_password_entry.pack(pady=5)
 
-        submit_button = tk.Button(
+        submit_button = ttk.Button(
             password_window,
             text="提交",
             command=lambda: self.check_password(new_password_entry.get(), confirm_password_entry.get()),
         )
-        submit_button.pack()
+        submit_button.pack(pady=10)
 
     def check_password(self, new_password, confirm_password):
         if new_password == confirm_password:
             response = self.__handle_client.send_request(
                 {"action": "modify_passwd", "id": self.__id, "new_password": new_password})
             if response["status"] == "success":
-                msgbox.showinfo("成功", "密码修改成功")
+                messagebox.showinfo("成功", "密码修改成功")
             else:
-                msgbox.showerror("错误", response.get("message", "未知错误"))
+                messagebox.showerror("错误", response.get("message", "未知错误"))
         else:
-            msgbox.showerror("错误", "两次输入密码不一致，请重新输入")
+            messagebox.showerror("错误", "两次输入密码不一致，请重新输入")
 
     def ai_for_student(self):
         from V.ai_view import StudentAIHelper
@@ -159,6 +163,6 @@ class StudentView:
 if __name__ == "__main__":
     root = tk.Tk()
     handle_client = HandleClient()
-    student_view = StudentView(root, handle_client)
+    student_view = StudentView(root, handle_client, "test_id")
     student_view.open_student_interface()
     root.mainloop()

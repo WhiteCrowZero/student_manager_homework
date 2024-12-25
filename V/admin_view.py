@@ -15,27 +15,27 @@ class AdminView:
 
         button_font = ("宋体", 15, "bold")
 
-        btn_show_student_info = tk.Button(self.admin_window, text="显示学生信息", command=self.show_student_info,
-                                          font=button_font)
+        btn_show_student_info = ttk.Button(self.admin_window, text="显示学生信息", command=self.show_student_info,
+                                           style="TButton")
         btn_show_student_info.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
 
-        btn_modify_student_info = tk.Button(self.admin_window, text="修改学生信息", command=self.modify_student_info,
-                                            font=button_font)
+        btn_modify_student_info = ttk.Button(self.admin_window, text="修改学生信息", command=self.modify_student_info,
+                                             style="TButton")
         btn_modify_student_info.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
 
-        btn_enter_course = tk.Button(self.admin_window, text="录入课程信息", command=self.enter_course,
-                                     font=button_font)
+        btn_enter_course = ttk.Button(self.admin_window, text="录入课程信息", command=self.enter_course,
+                                      style="TButton")
         btn_enter_course.grid(row=2, column=0, sticky="nsew", padx=10, pady=10)
 
-        btn_modify_score = tk.Button(self.admin_window, text="修改成绩", command=self.modify_score, font=button_font)
+        btn_modify_score = ttk.Button(self.admin_window, text="修改成绩", command=self.modify_score, style="TButton")
         btn_modify_score.grid(row=3, column=0, sticky="nsew", padx=10, pady=10)
 
-        btn_assign_course = tk.Button(self.admin_window, text="分配教师任教课程", command=self.assign_course,
-                                      font=button_font)
+        btn_assign_course = ttk.Button(self.admin_window, text="分配教师任教课程", command=self.assign_course,
+                                       style="TButton")
         btn_assign_course.grid(row=4, column=0, sticky="nsew", padx=10, pady=10)
 
-        btn_assign_account = tk.Button(self.admin_window, text="修改账号密码", command=self.modify_passwd,
-                                       font=button_font)
+        btn_assign_account = ttk.Button(self.admin_window, text="修改账号密码", command=self.modify_passwd,
+                                        style="TButton")
         btn_assign_account.grid(row=5, column=0, sticky="nsew", padx=10, pady=10)
 
         self.admin_window.columnconfigure(0, weight=1)
@@ -91,7 +91,7 @@ class AdminView:
 
             tree.pack()
 
-            save_btn = tk.Button(modify_window, text="保存", command=lambda: self.save_student_changes(tree))
+            save_btn = ttk.Button(modify_window, text="保存", command=lambda: self.save_student_changes(tree), style="TButton")
             save_btn.pack()
         else:
             messagebox.showerror("错误", "修改学生信息失败")
@@ -122,7 +122,7 @@ class AdminView:
 
         tree.pack()
 
-        add_course_btn = tk.Button(course_window, text="添加", command=lambda: self.add_course(tree))
+        add_course_btn = ttk.Button(course_window, text="添加", command=lambda: self.add_course(tree), style="TButton")
         add_course_btn.pack()
 
     def add_course(self, tree):
@@ -143,24 +143,25 @@ class AdminView:
         else:
             messagebox.showwarning("警告", "请输入完整信息")
             print("请输入完整信息")
-
     def assign_course(self):
         try:
             assign_window = tk.Toplevel(self.admin_window)
             assign_window.title("分配教师任教课程")
 
-            tk.Label(assign_window, text="课程号:").pack(pady=5)
-            course_id_entry = tk.Entry(assign_window)
+            # 输入框及标签
+            ttk.Label(assign_window, text="课程号:").pack(pady=5)
+            course_id_entry = ttk.Entry(assign_window)
             course_id_entry.pack(pady=5)
 
-            tk.Label(assign_window, text="教师工号:").pack(pady=5)
-            teacher_id_entry = tk.Entry(assign_window)
+            ttk.Label(assign_window, text="教师工号:").pack(pady=5)
+            teacher_id_entry = ttk.Entry(assign_window)
             teacher_id_entry.pack(pady=5)
 
-            tk.Label(assign_window, text="教学班级:").pack(pady=5)
-            class_name_entry = tk.Entry(assign_window)
+            ttk.Label(assign_window, text="教学班级:").pack(pady=5)
+            class_name_entry = ttk.Entry(assign_window)
             class_name_entry.pack(pady=5)
 
+            # 分配按钮
             def assign_teacher():
                 course_id = course_id_entry.get().strip()
                 teacher_id = teacher_id_entry.get().strip()
@@ -182,7 +183,7 @@ class AdminView:
                     messagebox.showerror("错误", "教师分配失败")
                     print("教师分配失败")
 
-            assign_btn = tk.Button(assign_window, text="分配", command=assign_teacher)
+            assign_btn = ttk.Button(assign_window, text="分配", command=assign_teacher, style="TButton")
             assign_btn.pack(pady=10)
 
         except Exception as e:
@@ -194,8 +195,9 @@ class AdminView:
         student_id_window = tk.Toplevel(self.admin_window)
         student_id_window.title("请输入学生账户ID")
 
-        tk.Label(student_id_window, text="学生账户ID：").pack(pady=5)
-        student_id_entry = tk.Entry(student_id_window)
+        # 标签与输入框
+        ttk.Label(student_id_window, text="学生账户ID：").pack(pady=5)
+        student_id_entry = ttk.Entry(student_id_window)
         student_id_entry.pack(pady=5)
 
         def fetch_scores():
@@ -216,97 +218,70 @@ class AdminView:
                 messagebox.showerror("错误", "获取学生成绩失败")
                 print("获取学生成绩失败")
 
-        tk.Button(student_id_window, text="提交", command=fetch_scores).pack(pady=10)
+        fetch_btn = ttk.Button(student_id_window, text="查询", command=fetch_scores, style="TButton")
+        fetch_btn.pack(pady=10)
 
-    def show_scores_window(self, scores, student_account_id):
-        # 创建窗口显示课程和成绩
-        modify_window = tk.Toplevel(self.admin_window)
-        modify_window.title("修改成绩")
+    def show_scores_window(self, scores, student_id):
+        score_window = tk.Toplevel(self.admin_window)
+        score_window.title(f"{student_id} 的成绩")
 
-        tree = ttk.Treeview(modify_window, columns=("课程号", "课程名", "成绩"), show="headings")
+        # 创建表格显示成绩
+        tree = ttk.Treeview(score_window, columns=("课程号", "课程名", "学分", "成绩"), show="headings")
         tree.heading("课程号", text="课程号")
         tree.heading("课程名", text="课程名")
+        tree.heading("学分", text="学分")
         tree.heading("成绩", text="成绩")
-        tree.pack(pady=10)
 
-        # 插入数据
         for score in scores:
             tree.insert("", "end", values=score)
 
-        def save_score_changes():
-            selected_item = tree.selection()  # 获取选中项
-            if not selected_item:
-                messagebox.showwarning("警告", "请先选择一项进行修改")
-                return
+        tree.pack()
 
-            # 获取选中项的课程号和原成绩
-            values = tree.item(selected_item[0], "values")
-            course_id = values[0]
-            original_score = values[2]
+        # 保存按钮
+        save_btn = ttk.Button(score_window, text="保存", command=lambda: self.save_score_changes(tree, student_id),
+                              style="TButton")
+        save_btn.pack(pady=10)
 
-            # 弹窗输入新的成绩
-            new_score = simpledialog.askstring("修改成绩", f"当前成绩为 {original_score}，请输入新成绩：")
-            if not new_score:
-                messagebox.showwarning("警告", "请输入有效的成绩")
-                return
-
-            try:
-                new_score = int(new_score)  # 确保成绩为整数
-            except ValueError:
-                messagebox.showerror("错误", "成绩必须为整数")
-                return
-
-            # 提交更新请求
-            response = self.__handle_client.send_request({
-                "action": "update_scores",
-                "course_id": course_id, "student_id": student_account_id, "score": new_score
-            })
-            if response and response.get("status") == "success":
-                messagebox.showinfo("提示", "成绩修改成功")
-                # 更新界面上的成绩
-                tree.item(selected_item[0], values=(values[0], values[1], new_score))
-            else:
-                messagebox.showerror("错误", "成绩修改失败")
-                print("成绩修改失败")
-
-        tk.Button(modify_window, text="修改成绩", command=save_score_changes).pack(pady=10)
+    def save_score_changes(self, tree, student_id):
+        updated_scores = []
+        for item in tree.get_children():
+            values = tree.item(item)["values"]
+            updated_scores.append(values)
+        response = self.__handle_client.send_request(
+            {"action": "update_scores", "updated_scores": updated_scores, "student_id": student_id})
+        if response and response.get("status") == "success":
+            messagebox.showinfo("提示", "成绩已更新")
+            print("成绩更新成功")
+        else:
+            messagebox.showerror("错误", "更新成绩失败")
+            print("更新成绩失败")
 
     def modify_passwd(self):
         modify_window = tk.Toplevel(self.admin_window)
         modify_window.title("修改账号密码")
 
-        tk.Label(modify_window, text="账号ID:").grid(row=0, column=0, padx=10, pady=10)
-        account_entry = tk.Entry(modify_window)
-        account_entry.grid(row=0, column=1, padx=10, pady=10)
+        # 创建标签与输入框
+        ttk.Label(modify_window, text="请输入新密码：").pack(pady=5)
+        new_passwd_entry = ttk.Entry(modify_window, show="*")
+        new_passwd_entry.pack(pady=5)
 
-        tk.Label(modify_window, text="新密码:").grid(row=1, column=0, padx=10, pady=10)
-        password_entry = tk.Entry(modify_window, show="*")
-        password_entry.grid(row=1, column=1, padx=10, pady=10)
+        def update_passwd():
+            new_passwd = new_passwd_entry.get().strip()
+            if not new_passwd:
+                messagebox.showwarning("警告", "密码不能为空")
+                return
 
-        def save_new_password():
-            account = account_entry.get()
-            new_password = password_entry.get()
-
-            if account and new_password:
-                response = self.__handle_client.send_request(
-                    {"action": "modify_passwd", "account_id": account, "new_password": new_password})
-                if response and response.get("status") == "success":
-                    messagebox.showinfo("提示", "密码修改成功")
-                    print("密码修改成功")
-                else:
-                    messagebox.showerror("错误", "密码修改失败")
-                    print("密码修改失败")
+            # 请求修改密码
+            response = self.__handle_client.send_request(
+                {"action": "modify_passwd", "new_passwd": new_passwd})
+            if response and response.get("status") == "success":
+                messagebox.showinfo("提示", "密码修改成功")
+                print("密码修改成功")
             else:
-                messagebox.showwarning("警告", "请输入完整信息")
-                print("账号或密码为空")
+                messagebox.showerror("错误", "密码修改失败")
+                print("密码修改失败")
 
-        save_btn = tk.Button(modify_window, text="保存", command=save_new_password)
-        save_btn.grid(row=2, column=0, columnspan=2, pady=10)
+        modify_btn = ttk.Button(modify_window, text="修改密码", command=update_passwd, style="TButton")
+        modify_btn.pack(pady=10)
 
 
-if __name__ == '__main__':
-    root = tk.Tk()
-    client = HandleClient()
-    app = AdminView(root, client)
-    app.open_admin_interface()
-    root.mainloop()
