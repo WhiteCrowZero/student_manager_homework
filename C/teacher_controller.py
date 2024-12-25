@@ -14,16 +14,11 @@ class TeacherController(Thread):
         if action == "get_teacher_courses":
             teacher_id = request.get("teacher_id")
             return self.get_teacher_courses(teacher_id)
-        elif action == "show_course_students":
-            course_id = request.get("course_id")
-            return self.show_course_students(course_id)
         elif action == "update_scores":
             course_id = request.get("course_id")
-            scores = request.get("scores")
-            return self.update_scores(course_id, scores)
-        elif action == "show_course_students":
-            course_id = request.get("course_id")
-            return self.show_course_students(course_id)
+            studetn_id = request.get("student_id")
+            score = request.get("score")
+            return self.update_scores(course_id, studetn_id, score)
         else:
             return {"status": "error", "message": "无效的请求"}
 
@@ -45,19 +40,12 @@ class TeacherController(Thread):
     def get_teacher_courses(self, teacher_id):
         courses = self.db_manager.get_teacher_courses(teacher_id)
         if courses:
-            return {"status": "success", "courses": courses}
+            return {"status": "success", "datas": courses}
         else:
             return {"status": "error", "message": "未找到该教师的课程"}
 
-    def show_course_students(self, course_id):
-        students = self.db_manager.show_course_students(course_id)
-        if students:
-            return {"status": "success", "students": students}
-        else:
-            return {"status": "error", "message": "未找到该课程的学生"}
-
-    def update_scores(self, course_id, scores):
-        if self.db_manager.update_scores(course_id, scores):
+    def update_scores(self, course_id, student_id, score):
+        if self.db_manager.update_scores(course_id, student_id, score):
             return {"status": "success", "message": "更新成功"}
         else:
             return {"status": "error", "message": "更新失败"}

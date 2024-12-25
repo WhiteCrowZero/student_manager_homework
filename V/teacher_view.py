@@ -1,5 +1,6 @@
 import tkinter as tk
-from tkinter import ttk, messagebox, simpledialog
+from tkinter import ttk, messagebox
+
 from C.handle_client import HandleClient
 
 
@@ -16,7 +17,7 @@ class TeacherView:
         button_font = ("宋体", 15, "bold")
 
         btn_show_teacher_course_selection_info = tk.Button(
-            self.teacher_window, text="查看所教课程选课信息",
+            self.teacher_window, text="查看所教课程信息",
             command=self.show_teacher_course_selection_info, font=button_font
         )
         btn_show_teacher_course_selection_info.pack(pady=10)
@@ -32,112 +33,86 @@ class TeacherView:
     def show_teacher_course_selection_info(self):
         selection_window = tk.Toplevel(self.teacher_window)
         selection_window.title("我的课程")
+        selection_window.geometry("400x300")
+        columns = ("课程号", "课程名", "学分")
+        tree = ttk.Treeview(selection_window, columns=columns, show="headings")
 
-        # 获取教师课程信息
-        response = self.__handle_client.send_request({"action": "get_teacher_courses", "teacher_id": self.__id})
-        status = response['status']
+        for col in columns:
+            tree.heading(col, text=col)
+
+        # 从服务端获取课程数据
+        courses = self.__handle_client.send_request({"action": "get_teacher_courses", "teacher_id": self.__id})
+        print(courses)
+        status = courses.get("status")
         if status:
-            teacher_courses = response["courses"]
+            courses = courses.get("datas")
+            for course in courses:
+                tree.insert("", "end", values=(course))
+            tree.pack()
         else:
             messagebox.showerror("错误", "获取课程信息失败")
-            return
-
-        course_var = tk.StringVar()
-        course_dropdown = ttk.Combobox(selection_window, textvariable=course_var)
-        ##################################################################
-        course_dropdown['values'] = teacher_courses.keys()
-        course_dropdown.pack()
-
-        def update_table(event):
-            selected_course = course_var.get()
-            if not selected_course:
-                return
-
-            # 获取选课学生信息
-            response = self.__handle_client.send_request({"action": "show_course_students", "course": selected_course})
-            if response and "students" in response:
-                students = response["students"]
-            else:
-                messagebox.showerror("错误", "获取学生信息失败")
-                return
-
-            columns = ("学号", "姓名", "性别", "所在学院")
-            tree = ttk.Treeview(selection_window, columns=columns, show="headings")
-
-            for col in columns:
-                tree.heading(col, text=col)
-
-            for student in students:
-                tree.insert("", "end", values=(student["学号"], student["姓名"], student["性别"], student["所在学院"]))
-
-            tree.pack()
-
-        course_dropdown.bind("<<ComboboxSelected>>", update_table)
 
     def enter_grades(self):
         grades_window = tk.Toplevel(self.teacher_window)
         grades_window.title("录入成绩")
+        grades_window.geometry("300x200")
 
         # 获取教师课程信息
-        response = self.__handle_client.send_request({"action": "get_teacher_courses"})
-        if response and "courses" in response:
-            teacher_courses = response["courses"]
-        else:
+        response = self.__handle_client.send_request({"action": "get_teacher_courses", "teacher_id": self.__id})
+        if not response.get("status"):
             messagebox.showerror("错误", "获取课程信息失败")
             return
 
+        teacher_courses = response.get("datas", [])
+        if not teacher_courses:
+            messagebox.showinfo("提示", "当前没有可用课程")
+            return
+
+        # 下拉框选择课程
+        tk.Label(grades_window, text="选择课程:").pack(pady=5)
         course_var = tk.StringVar()
-        course_dropdown = ttk.Combobox(grades_window, textvariable=course_var)
-        course_dropdown['values'] = list(teacher_courses.keys())
-        course_dropdown.pack()
+        course_dropdown = ttk.Combobox(grades_window, textvariable=course_var, state="readonly", width=25)
+        course_dropdown['values'] = [(teacher_course[0], teacher_course[1]) for teacher_course in teacher_courses]
+        course_dropdown.pack(pady=5)
 
-        def update_table_with_grades(event):
+        # 输入学号和成绩
+        tk.Label(grades_window, text="输入学号:").pack(pady=5)
+        student_id_entry = tk.Entry(grades_window)
+        student_id_entry.pack(pady=5)
+
+        tk.Label(grades_window, text="输入成绩:").pack(pady=5)
+        grade_entry = tk.Entry(grades_window)
+        grade_entry.pack(pady=5)
+
+        # 保存成绩的函数
+        def save_grade():
             selected_course = course_var.get()
+            student_id = student_id_entry.get().strip()
+            grade = grade_entry.get().strip()
+
             if not selected_course:
+                messagebox.showwarning("警告", "请选择课程")
+                return
+            if not student_id or not grade:
+                messagebox.showwarning("警告", "请输入学号和成绩")
                 return
 
-            # 获取选课学生成绩信息
-            response = self.__handle_client.send_request({"action": "show_course_students", "course": selected_course})
-            if response and "students" in response:
-                students = response["students"]
+            # 提交成绩
+            course_id = selected_course.split(" ", 1)[0]
+            request = {
+                "action": "update_scores",
+                "course_id": course_id, "student_id": student_id, "score": grade
+            }
+            print(request)
+            response = self.__handle_client.send_request(request)
+            if response.get("status") == 'success':
+                messagebox.showinfo("提示", "成绩保存成功")
             else:
-                messagebox.showerror("错误", "获取学生成绩信息失败")
-                return
+                messagebox.showerror("错误", "保存成绩失败")
 
-            columns = ("学号", "姓名", "性别", "所在学院", "成绩")
-            tree = ttk.Treeview(grades_window, columns=columns, show="headings")
-
-            for col in columns:
-                tree.heading(col, text=col)
-
-            for student in students:
-                grade = student.get("成绩", "")
-                tree.insert("", "end", values=(
-                    student["学号"], student["姓名"], student["性别"], student["所在学院"], grade
-                ))
-
-            tree.pack()
-
-            def save_grades():
-                updated_grades = []
-                for item in tree.get_children():
-                    values = tree.item(item, "values")
-                    updated_grades.append({
-                        "学号": values[0], "成绩": values[-1]
-                    })
-
-                response = self.__handle_client.send_request({
-                    "action": "update_scores", "data": {"course": selected_course, "grades": updated_grades}
-                })
-                if response and response.get("status") == "success":
-                    messagebox.showinfo("提示", "成绩保存成功")
-                else:
-                    messagebox.showerror("错误", "保存成绩失败")
-
-            save_button = tk.Button(grades_window, text="保存", command=save_grades)
-            save_button.pack()
-
-        course_dropdown.bind("<<ComboboxSelected>>", update_table_with_grades)
+        # 保存按钮
+        save_button = tk.Button(grades_window, text="保存成绩", command=save_grade)
+        save_button.pack(pady=10)
 
 
 if __name__ == '__main__':
