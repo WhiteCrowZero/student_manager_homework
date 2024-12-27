@@ -54,6 +54,9 @@ class AdminController(Thread):
             return self.modify_passwd(account_id, new_password)
         elif action == "show_course_info":
             return self.show_course_info()
+        elif action == "stu_id2account_id":
+            stu_id = request.get("stu_id")
+            return self.stu_id2account_id(stu_id)
         else:
             return {"status": "error", "message": "无效的请求"}
 
@@ -130,3 +133,10 @@ class AdminController(Thread):
             return {"status": "success", "datas": course_info}
         else:
             return {"status": "error", "message": "获取课程信息失败"}
+
+    def stu_id2account_id(self, stu_id):
+        account_id = self.db_manager.stu_id2account_id(stu_id)
+        if account_id:
+            return {"status": "success", "datas": account_id}
+        else:
+            return {"status": "error", "message": "获取学生账户信息失败"}

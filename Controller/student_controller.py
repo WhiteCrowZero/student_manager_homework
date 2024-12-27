@@ -74,8 +74,6 @@ class StudentController(Thread):
 
     def show_course(self, id):
         info = self.db_manager.show_course(id)
-        print(info)
-        print(list(info))
         if info:
             return {"status": "success", "datas": list(info)}
         else:
@@ -110,4 +108,4 @@ class StudentController(Thread):
     @staticmethod
     def wen_xin(courses, problem):
         reply = single_main(courses, problem)
-        return {"status": "success", "courses": courses, "datas": reply}
+        return {"status": "success", "datas": reply}

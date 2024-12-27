@@ -84,6 +84,8 @@ class AdminView:
             modify_window = tk.Toplevel(self.admin_window)
             modify_window.title("修改学生信息")
 
+            ttk.Label(modify_window, text="双击修改信息").pack()
+
             tree = ttk.Treeview(modify_window, columns=("学号", "账号ID", "姓名", "性别", "所在学院", "班级"),
                                 show="headings")
             tree.heading("学号", text="学号")
@@ -105,7 +107,7 @@ class AdminView:
             def start_edit(event):
                 # 获取用户双击的列
                 col = tree.identify_column(event.x)
-                if col == "#1":  # 如果点击的是“学号”列，不允许编辑
+                if col == "#1" or col == "#2":  # 如果点击的是“学号”/“账户ID”列，不允许编辑
                     return
 
                 col_index = int(col[1:]) - 1  # 解析列索引
@@ -291,7 +293,7 @@ class AdminView:
     def modify_score(self):
         # 创建窗口
         student_id_window = tk.Toplevel(self.admin_window)
-        student_id_window.title("请输入学生账户ID")
+        student_id_window.title("请输入学生学号")
         # 设置窗口大小
         student_id_window.geometry("300x200")
 
@@ -301,14 +303,21 @@ class AdminView:
         style.configure('TEntry', font=('黑体', 12))
 
         # 标签与输入框
-        ttk.Label(student_id_window, text="学生账户ID：").pack(pady=5)
+        ttk.Label(student_id_window, text="学生学号：").pack(pady=5)
         student_id_entry = ttk.Entry(student_id_window)
         student_id_entry.pack(pady=5)
 
         def fetch_scores():
-            student_account_id = student_id_entry.get().strip()
-            if not student_account_id:
-                messagebox.showwarning("警告", "请输入学生账户ID")
+            stu_id = student_id_entry.get().strip()
+            if not stu_id:
+                messagebox.showwarning("警告", "请输入学生学号")
+                return
+            resp = self.__handle_client.send_request({"action": "stu_id2account_id", "stu_id": stu_id})
+            status = resp.get("status")
+            if status == "success":
+                student_account_id = resp.get("datas")
+            else:
+                messagebox.showerror("错误", "获取学生学号失败")
                 return
 
             # 发送请求获取学生成绩
@@ -327,8 +336,12 @@ class AdminView:
         fetch_btn.pack(pady=10)
 
     def show_scores_window(self, scores, student_id):
+
         score_window = tk.Toplevel(self.admin_window)
-        score_window.title(f"{student_id} 的成绩")
+        score_window.title(f"ID{student_id} 的成绩")
+
+        ttk.Label(score_window, text="学生成绩", font=("宋体", 16, "bold")).pack(pady=10)
+        ttk.Label(score_window, text=f"双击修改成绩").pack(pady=5)
 
         # 创建表格显示成绩
         tree = ttk.Treeview(score_window, columns=("课程号", "课程名", "成绩"), show="headings")
@@ -393,7 +406,6 @@ class AdminView:
                 print("更新成绩失败")
         messagebox.showinfo("提示", "成绩已更新")
         print("成绩更新成功")
-
 
     def modify_passwd(self):
         modify_window = tk.Toplevel(self.admin_window)

@@ -2,16 +2,6 @@
 CREATE DATABASE IF NOT EXISTS student_course;
 USE student_course;
 
--- 删除旧表
-DROP TABLE IF EXISTS teacher_course;
-DROP TABLE IF EXISTS student_course;
-DROP TABLE IF EXISTS teacher;
-DROP TABLE IF EXISTS course;
-DROP TABLE IF EXISTS student;
-DROP TABLE IF EXISTS admin;
-DROP TABLE IF EXISTS class;
-DROP TABLE IF EXISTS account;
-
 -- 创建 account 表（登录账户信息表）
 CREATE TABLE account (
     account_id INT AUTO_INCREMENT PRIMARY KEY,

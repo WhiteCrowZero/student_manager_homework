@@ -123,6 +123,20 @@ class DatabaseManager:
             print(e)
             return False
 
+    def get_student_scores(self, course_id):
+        sql = ("SELECT s.id, s.name, s.classname, c.coursename, sc.score FROM student s "
+               "LEFT JOIN student_course sc ON s.id = sc.sid "
+               "LEFT JOIN course c ON sc.cid = c.id "
+               "WHERE sc.cid = %s")
+        try:
+            self.cursor.execute(sql, (course_id,))
+            self.db.commit()
+            return self.cursor.fetchall()
+        except Exception as e:
+            self.db.rollback()
+            print(e)
+            return False
+
     """
     管理员部分
     """
@@ -140,9 +154,10 @@ class DatabaseManager:
 
     def update_students(self, students):
         for student in students:
+            print(student)
             sql = "update student set account_id = %s, name=%s,sex = %s, department = %s,  classname = %s where id = %s"
             try:
-                self.cursor.execute(sql, (student[1], student[2], student[3], student[4], student[5], student[0]))
+                self.cursor.execute(sql, (student['account_id'], student['name'], student['gender'], student['school'], student['class'], student['student_id']))
                 self.db.commit()
             except Exception as e:
                 self.db.rollback()
@@ -200,6 +215,17 @@ class DatabaseManager:
             self.cursor.execute(sql)
             self.db.commit()
             return self.cursor.fetchall()
+        except Exception as e:
+            self.db.rollback()
+            print(e)
+            return False
+
+    def stu_id2account_id(self, stu_id):
+        sql = "select account_id from student where id = %s"
+        try:
+            self.cursor.execute(sql, (stu_id,))
+            self.db.commit()
+            return self.cursor.fetchone()[0]
         except Exception as e:
             self.db.rollback()
             print(e)

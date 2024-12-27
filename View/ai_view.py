@@ -35,6 +35,9 @@ class StudentAIHelper:
         )
         self.course_display.pack(fill=tk.BOTH, padx=5, pady=5)
 
+        # 初始化课程信息
+        self.initialize_courses()
+
         # 中部：聊天显示区域
         chat_frame = ttk.LabelFrame(main_frame, text="聊天区域", padding=10)
         chat_frame.pack(fill=tk.BOTH, expand=True, pady=10)
@@ -67,32 +70,34 @@ class StudentAIHelper:
             foreground=[("disabled", "#666666")],
         )
 
+    # 初始化课程信息
+    def initialize_courses(self):
+        request = {"action": "show_course", "student_id": self.__id}
+        resp = self.__handle_client.send_request(request)
+        courses = resp.get("datas", [])
+        self.course_display.config(state=tk.NORMAL)
+        self.course_display.delete(1.0, tk.END)  # 清空课程显示区域
+        self.course_display.insert(tk.END, "课程ID\t课程名称\t学分\n")
+        for course in courses:
+            course = map(str, course)
+            course = "\t".join(course)
+            self.course_display.insert(tk.END, f"{course}\n")
+        self.course_display.config(state=tk.DISABLED)
+
     # 获取学生输入的问题
     def get_student_input(self):
         question = self.input_entry.get().strip()
         if question:  # 确保输入不为空
             self.add_to_chat("学生", question, "#0078D7")  # 蓝色字体显示学生输入
             self.input_entry.delete(0, tk.END)  # 清空输入框
-            courses, response = self.send_question_to_server(question)  # 发送问题到服务端
-            self.display_courses(courses)  # 显示课程信息
+            response = self.send_question_to_server(question)  # 发送问题到服务端
             self.display_ai_response(response)  # 显示 AI 回复
 
     # 发送问题到服务端
     def send_question_to_server(self, question):
         request = {"action": "ai_for_student", "student_id": self.__id, "question": question}
         resp = self.__handle_client.send_request(request)
-        status = resp.get("status")
-        if status:
-            return resp.get("courses", "暂无课程信息"), resp.get("datas", "AI 助手暂时无法回答您的问题，请稍后再试。")
-        else:
-            return "暂无课程信息", "AI 助手暂时无法回答您的问题，请稍后再试。"
-
-    # 显示课程信息
-    def display_courses(self, courses):
-        self.course_display.config(state=tk.NORMAL)
-        self.course_display.delete(1.0, tk.END)  # 清空课程显示区域
-        self.course_display.insert(tk.END, courses)
-        self.course_display.config(state=tk.DISABLED)
+        return resp.get("datas", "AI 助手暂时无法回答您的问题，请稍后再试。")
 
     # 显示 AI 助手的回复
     def display_ai_response(self, response):
@@ -102,11 +107,12 @@ class StudentAIHelper:
     def add_to_chat(self, sender, message, color="#333"):
         self.chat_display.config(state=tk.NORMAL)
         self.chat_display.insert(tk.END, f"{sender}: ", ("sender",))
-        self.chat_display.insert(tk.END, f"{message}\n", ("message", color))
         self.chat_display.tag_configure("sender", font=("Arial", 10, "bold"))
+        self.chat_display.insert(tk.END, f"{message}\n", ("message", color))
         self.chat_display.tag_configure("message", foreground=color)
         self.chat_display.config(state=tk.DISABLED)
         self.chat_display.see(tk.END)
+
 
 if __name__ == '__main__':
     from Controller.handle_client import HandleClient
